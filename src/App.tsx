@@ -2,7 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { LineChart } from "@mui/x-charts";
 import { BigDecimal } from "@joaonmatos/decimal";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { allProbabilities } from "./math";
 
 const formSchema = z.object({
@@ -10,41 +10,69 @@ const formSchema = z.object({
   p: z.string().pipe(z.number({ coerce: true }).min(0).max(1)),
 });
 
+type AppState = {
+  readonly current: {
+    readonly n: number;
+    readonly p: number;
+  };
+  readonly history: {
+    readonly n: number;
+    readonly p: number;
+  }[];
+};
+
 export function App() {
-  const [state, setState] = useState<{ n: number; p: number }>({
-    n: 16,
-    p: 0.5,
+  const [state, setState] = useState<AppState>({
+    current: {
+      n: 16,
+      p: 0.5,
+    },
+    history: [],
   });
+  const setParams = useCallback(
+    (n: number, p: number) =>
+      setState((state) => {
+        if (state.current.n === n && state.current.p === p) {
+          return state;
+        }
+        return {
+          current: { n, p },
+          history: [state.current, ...state.history],
+        };
+      }),
+    [setState]
+  );
   const probabilities = useMemo(
-    () => allProbabilities(state.n, state.p),
+    () => allProbabilities(state.current.n, state.current.p),
     [state]
+  );
+  const download = useCallback(
+    () => downloadCsv(probabilities),
+    [probabilities]
   );
   const form = useForm({
     defaultValues: {
-      n: `${state.n}`,
-      p: `${state.p}`,
+      n: `${state.current.n}`,
+      p: `${state.current.p}`,
     },
     validators: {
       onChange: formSchema,
     },
     onSubmit: ({ value }) => {
       const { n, p } = formSchema.parse(value);
-      setState({ n, p });
+      setParams(n, p);
     },
   });
   const reset = useCallback(
-    () => form.reset({ n: `${state.n}`, p: `${state.p}` }),
+    () => form.reset({ n: `${state.current.n}`, p: `${state.current.p}` }),
     [state, form]
   );
-  const download = useCallback(
-    () => downloadCsv(probabilities),
-    [probabilities]
-  );
+  useEffect(() => reset(), [state]);
   return (
     <>
-      n: {state.n}
+      n: {state.current.n}
       <br />
-      p: {state.p}
+      p: {state.current.p}
       <br />
       <LineChart
         series={[{ data: probabilities.map((d) => d.number()) }]}
@@ -102,6 +130,20 @@ export function App() {
       </form>
       <button onClick={reset}>Reset</button>
       <button onClick={download}>Download CSV</button>
+      {state.history.length > 0 && (
+        <>
+          <h3>History</h3>
+          <ul>
+            {state.history.map((entry, i) => (
+              <li key={i}>
+                <a href="#" onClick={() => setParams(entry.n, entry.p)}>
+                  n: {entry.n}&#9;p: {entry.p}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </>
   );
 }
