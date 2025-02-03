@@ -35,7 +35,7 @@ function probability(n: number, k: number, p: number, nCk: bigint): BigDecimal {
     .multiply(successChances)
     .multiply(failureChances)
     .multiply(ONE_HUNDRED)
-    .round(12);
+    .round({ precision: 8 });
 }
 
 export function allProbabilities(n: number, p: number): BigDecimal[] {

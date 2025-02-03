@@ -47,7 +47,7 @@ export function App() {
       p: {state.p}
       <br />
       <LineChart
-        series={[{ data: probabilities.map((d) => d.number) }]}
+        series={[{ data: probabilities.map((d) => d.number()) }]}
         width={800}
         height={600}
       />
