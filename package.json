@@ -12,7 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@joaonmatos/decimal": "^0.7.0",
+    "@joaonmatos/decimal": "^0.8.0",
     "@mui/material": "^6.4.2",
     "@mui/x-charts": "^7.25.0",
     "@tanstack/react-form": "^0.41.3",
